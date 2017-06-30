@@ -1,14 +1,11 @@
 require "spec_helper"
-require 'httparty'
-require 'coolpay'
 
-RSpec.describe Coolpay do
+RSpec.describe Coolpay::Client do
   before do
-    @coolpay = Coolpay.new
+    @coolpay = Coolpay::Client.new
   end
 
   describe 'authentication' do
-
     it 'should have credentials present' do
       expect { @coolpay.authenticate(nil, 'test') }.to raise_error(ArgumentError)
       expect { @coolpay.authenticate('', 'test') }.to raise_error(ArgumentError)
@@ -18,7 +15,7 @@ RSpec.describe Coolpay do
 
     describe 'successful' do
       before do
-        stub_request(:post, Coolpay::LOGIN_URL)
+        stub_request(:post, Coolpay::API_URL + '/login')
           .with(body: { username: 'valid-user', password: 'valid-password' }.to_json)
           .to_return(status: 200, body: { token: 'valid-token' }.to_json,
                      headers: { 'Content-Type' => 'application/json' })
@@ -32,7 +29,7 @@ RSpec.describe Coolpay do
 
     describe 'unsuccessful' do
       before do
-        stub_request(:post, Coolpay::LOGIN_URL)
+        stub_request(:post, Coolpay::API_URL + '/login')
           .with(body: { username: 'valid-user', password: 'valid-password' }.to_json)
           .to_return(status: 404, body: 'Internal Server Error',
                      headers: { 'Content-Type' => 'application/json' })
@@ -42,6 +39,13 @@ RSpec.describe Coolpay do
         expect { @coolpay.authenticate('valid-user', 'valid-password') }
           .to raise_error(Coolpay::AuthenticationError)
       end
+    end
+  end
+
+  describe 'recipient addition' do
+    it 'should have name present' do
+      expect { @coolpay.add_recipient('') }.to raise_error ArgumentError
+      expect { @coolpay.add_recipient(nil) }.to raise_error ArgumentError
     end
   end
 end
