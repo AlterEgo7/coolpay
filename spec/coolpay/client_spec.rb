@@ -51,14 +51,21 @@ RSpec.describe Coolpay::Client do
     describe 'successful' do
 
       before do
+        stub_request(:post, Coolpay::API_URL + '/login')
+          .with(body: { username: 'valid-user', password: 'valid-password' }.to_json)
+          .to_return(status: 200, body: { token: 'valid-token' }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+
         stub_request(:post, Coolpay::API_URL + '/recipients')
           .with(body: { name: 'recipient' }.to_json)
           .to_return(status: 201, body: { name: 'recipient', id: '123456' }.to_json,
-                     headers: { 'Content-Type' => 'application/json' })
+                     headers: { 'Content-Type' => 'application/json',
+                                'Authorization' => 'Bearer valid-token' })
+        @client.authenticate('valid-user', 'valid-password')
       end
 
       it 'should return new Recipient' do
-        expect(@client.add_recipient('recipient').name).to eq 'recipient'
+        expect(@client.add_recipient('recipient')).to eq Coolpay::Recipient.new('recipient', '123456')
       end
     end
 
@@ -66,13 +73,46 @@ RSpec.describe Coolpay::Client do
       before do
         stub_request(:post, Coolpay::API_URL + '/recipients')
           .with(body: { name: 'recipient' }.to_json)
-          .to_return(status: 500)
+          .to_return(status: 401)
       end
 
       it 'should raise ApiError' do
-        expect { @client.add_recipient('recipient') }.to raise_error Coolpay::ApiError
+        expect { @client.add_recipient('recipient') }.to raise_error Coolpay::UnauthorizedError
+      end
+    end
+  end
+
+  describe 'get recipients' do
+    describe 'successful' do
+      before do
+        stub_request(:post, Coolpay::API_URL + '/login')
+          .with(body: { username: 'valid-user', password: 'valid-password' }.to_json)
+          .to_return(status: 200, body: { token: 'valid-token' }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+
+        stub_request(:get, Coolpay::API_URL + '/recipients')
+          .to_return(status: 200, body: { recipients: [{ name: 'recipient', id: '123456' },
+                                                       { name: 'recipient2', id: '654321' }] }.to_json,
+                     headers: { 'Content-Type' => 'application/json',
+                                'Authorization' => 'Bearer valid-token' })
+        @client.authenticate('valid-user', 'valid-password')
+      end
+
+      it 'should return Recipient array' do
+        expect(@client.get_recipients).to eq [Coolpay::Recipient.new('recipient', '123456'),
+                                              Coolpay::Recipient.new('recipient2', '654321')]
       end
     end
 
+    describe 'unsuccessful' do
+      before do
+        stub_request(:get, Coolpay::API_URL + '/recipients')
+          .to_return(status: 401)
+      end
+
+      it 'should raise UnauthorizedError' do
+        expect { @client.get_recipients }.to raise_error Coolpay::UnauthorizedError
+      end
+    end
   end
 end

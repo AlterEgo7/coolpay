@@ -27,23 +27,50 @@ module Coolpay
 
     def add_recipient(name)
       raise ArgumentError, 'recipient name is mandatory' if name.to_s.empty?
+      raise UnauthorizedError if @token.nil?
 
       body = { name: name }.to_json
       response = HTTParty.post(API_URL + '/recipients', body: body,
-                               headers: { :'Content-Type' => 'application/json' })
+                               headers: { :'Content-Type' => 'application/json', Authorization: "Bearer #{token}" })
 
       unless response.created?
         raise ApiError, 'recipient could not be created'
       end
 
+      if response.unauthorized?
+        raise UnauthorizedError
+      end
+
       response_body = response.parsed_response
-      Recipient.new(response_body['name'],response_body['id'])
+      Recipient.new(response_body['name'], response_body['id'])
+    end
+
+    def get_recipients(name = nil)
+      raise UnauthorizedError if @token.nil?
+
+      unless name.nil?
+        body = { name: name }
+      end
+
+      response = HTTParty.get(API_URL + '/recipients', body: body,
+                              headers: { :'Content-Type' => 'application/json', Authorization: "Bearer #{token}" })
+
+      raise UnauthorizedError if response.unauthorized?
+
+      response.parsed_response['recipients']
+        .map { |h| Recipient.new(h['name'], h['id']) }
     end
 
   end
 
   class AuthenticationError < StandardError
     def initialize(msg = 'Authentication Unsuccessful')
+      super(msg)
+    end
+  end
+
+  class UnauthorizedError < StandardError
+    def initialize(msg = 'Token cannot be authorized')
       super(msg)
     end
   end

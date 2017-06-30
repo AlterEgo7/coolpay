@@ -6,5 +6,12 @@ module Coolpay
       name.to_s.empty? ? raise(ArgumentError, 'name is mandatory') : @name = name
       id.to_s.empty? ? raise(ArgumentError, 'ID is mandatory') : @id = id
     end
+
+    def ==(other)
+      # Suppose the backend takes care for uniqueness of ids
+      id == other.id
+    end
+
+
   end
 end
