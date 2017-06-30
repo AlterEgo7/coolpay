@@ -2,15 +2,15 @@ require "spec_helper"
 
 RSpec.describe Coolpay::Client do
   before do
-    @coolpay = Coolpay::Client.new
+    @client = Coolpay::Client.new
   end
 
   describe 'authentication' do
     it 'should have credentials present' do
-      expect { @coolpay.authenticate(nil, 'test') }.to raise_error(ArgumentError)
-      expect { @coolpay.authenticate('', 'test') }.to raise_error(ArgumentError)
-      expect { @coolpay.authenticate('test', '') }.to raise_error(ArgumentError)
-      expect { @coolpay.authenticate('test', nil) }.to raise_error(ArgumentError)
+      expect { @client.authenticate(nil, 'test') }.to raise_error(ArgumentError)
+      expect { @client.authenticate('', 'test') }.to raise_error(ArgumentError)
+      expect { @client.authenticate('test', '') }.to raise_error(ArgumentError)
+      expect { @client.authenticate('test', nil) }.to raise_error(ArgumentError)
     end
 
     describe 'successful' do
@@ -19,11 +19,11 @@ RSpec.describe Coolpay::Client do
           .with(body: { username: 'valid-user', password: 'valid-password' }.to_json)
           .to_return(status: 200, body: { token: 'valid-token' }.to_json,
                      headers: { 'Content-Type' => 'application/json' })
-        @coolpay.authenticate('valid-user', 'valid-password')
+        @client.authenticate('valid-user', 'valid-password')
       end
 
       it 'should have receive authentication token' do
-        expect(@coolpay.token).to eq 'valid-token'
+        expect(@client.token).to eq 'valid-token'
       end
     end
 
@@ -36,7 +36,7 @@ RSpec.describe Coolpay::Client do
       end
 
       it 'should raise exception' do
-        expect { @coolpay.authenticate('valid-user', 'valid-password') }
+        expect { @client.authenticate('valid-user', 'valid-password') }
           .to raise_error(Coolpay::AuthenticationError)
       end
     end
@@ -44,8 +44,35 @@ RSpec.describe Coolpay::Client do
 
   describe 'recipient addition' do
     it 'should have name present' do
-      expect { @coolpay.add_recipient('') }.to raise_error ArgumentError
-      expect { @coolpay.add_recipient(nil) }.to raise_error ArgumentError
+      expect { @client.add_recipient('') }.to raise_error ArgumentError
+      expect { @client.add_recipient(nil) }.to raise_error ArgumentError
     end
+
+    describe 'successful' do
+
+      before do
+        stub_request(:post, Coolpay::API_URL + '/recipients')
+          .with(body: { name: 'recipient' }.to_json)
+          .to_return(status: 201, body: { name: 'recipient', id: '123456' }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'should return new Recipient' do
+        expect(@client.add_recipient('recipient').name).to eq 'recipient'
+      end
+    end
+
+    describe 'unsuccessful' do
+      before do
+        stub_request(:post, Coolpay::API_URL + '/recipients')
+          .with(body: { name: 'recipient' }.to_json)
+          .to_return(status: 500)
+      end
+
+      it 'should raise ApiError' do
+        expect { @client.add_recipient('recipient') }.to raise_error Coolpay::ApiError
+      end
+    end
+
   end
 end

@@ -1,4 +1,5 @@
 require "coolpay/version"
+require 'coolpay/recipient'
 require 'httparty'
 
 module Coolpay
@@ -35,6 +36,8 @@ module Coolpay
         raise ApiError, 'recipient could not be created'
       end
 
+      response_body = response.parsed_response
+      Recipient.new(response_body['name'],response_body['id'])
     end
 
   end
