@@ -9,7 +9,7 @@ module Coolpay
 
     def ==(other)
       # Suppose the backend takes care for uniqueness of ids
-      id == other.id
+      (other.class == self.class) && (id == other.id)
     end
 
 
