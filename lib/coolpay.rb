@@ -77,7 +77,7 @@ module Coolpay
 
       raise UnauthorizedError if response.unauthorized?
       raise ArgumentError, 'Recipient does not exist' if response.unprocessable_entity?
-      raise ApiError, 'Something went wrong' if response.code == 400
+      raise ApiError, 'Something went wrong' if response.code == 400 || response.internal_server_error?
 
       Payment.new(response.parsed_response['payment'])
     end
