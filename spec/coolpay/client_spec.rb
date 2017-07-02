@@ -51,7 +51,7 @@ RSpec.describe Coolpay::Client do
         authenticate_client
 
         stub_request(:post, Coolpay::API_URL + '/recipients')
-          .with(body: { name: 'recipient' }.to_json)
+          .with(body: { recipient: { name: 'recipient' } }.to_json)
           .to_return(status: 201, body: { name: 'recipient', id: '123456' }.to_json,
                      headers: { 'Content-Type' => 'application/json',
                                 'Authorization' => 'Bearer valid-token' })
@@ -65,7 +65,7 @@ RSpec.describe Coolpay::Client do
     describe 'unsuccessful' do
       before do
         stub_request(:post, Coolpay::API_URL + '/recipients')
-          .with(body: { name: 'recipient' }.to_json)
+          .with(body: { recipient: { name: 'recipient' } }.to_json)
           .to_return(status: 401)
       end
 

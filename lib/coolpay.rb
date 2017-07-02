@@ -1,5 +1,6 @@
 require "coolpay/version"
 require 'coolpay/recipient'
+require 'coolpay/payment'
 require 'httparty'
 
 module Coolpay
@@ -31,7 +32,7 @@ module Coolpay
       raise ArgumentError, 'recipient name is mandatory' if name.to_s.empty?
       raise UnauthorizedError if @token.nil?
 
-      body = { name: name }.to_json
+      body = { recipient: { name: name } }.to_json
       response = HTTParty.post(API_URL + '/recipients', body: body,
                                headers: { :'Content-Type' => 'application/json', Authorization: "Bearer #{token}" })
 
@@ -43,8 +44,8 @@ module Coolpay
         raise UnauthorizedError
       end
 
-      response_body = response.parsed_response
-      Recipient.new(response_body['name'], response_body['id'])
+      recipient_attributes = response.parsed_response['recipient']
+      Recipient.new(recipient_attributes['name'], recipient_attributes['id'])
     end
 
     def get_recipients(name = nil)
