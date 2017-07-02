@@ -7,15 +7,12 @@ module Coolpay
 
   API_URL = 'https://coolpay.herokuapp.com/api'
 
-
-  # TODO: Refactor validations and checks into methods
   class Client
 
     attr_accessor :token
 
     def authenticate(username, apikey)
-      raise ArgumentError, 'username is mandatory' if username.to_s.empty?
-      raise ArgumentError, 'apikey is mandatory' if apikey.to_s.empty?
+      validate_login_arguments(apikey, username)
 
       body = { username: username, apikey: apikey }.to_json
       response = HTTParty.post(API_URL + '/login', body: body,
@@ -29,7 +26,7 @@ module Coolpay
     end
 
     def add_recipient(name)
-      raise ArgumentError, 'recipient name is mandatory' if name.to_s.empty?
+      validate_recipient_arguments(name)
       raise UnauthorizedError if @token.nil?
 
       body = { recipient: { name: name } }.to_json
@@ -66,9 +63,7 @@ module Coolpay
 
     def create_payment(amount, currency, recipient_id)
       raise UnauthorizedError if @token.nil?
-      raise ArgumentError 'Amount must be numeric' unless amount.to_f > 0
-      raise ArgumentError 'Currency must be a string' if currency.to_s.empty?
-      raise ArgumentError 'Recipient ID must be a string' if recipient_id.to_s.empty?
+      validate_payment_arguments(amount, currency, recipient_id)
 
       body = { payment: { amount: amount.to_f, currency: currency, recipient_id: recipient_id } }.to_json
 
@@ -91,6 +86,23 @@ module Coolpay
       raise UnauthorizedError if response.unauthorized?
 
       response.parsed_response['payments'].map { |options| Payment.new(options) }
+    end
+
+    private
+
+    def validate_login_arguments(apikey, username)
+      raise ArgumentError, 'username is mandatory' if username.to_s.empty?
+      raise ArgumentError, 'apikey is mandatory' if apikey.to_s.empty?
+    end
+
+    def validate_payment_arguments(amount, currency, recipient_id)
+      raise ArgumentError 'Amount must be numeric' unless amount.to_f > 0
+      raise ArgumentError 'Currency must be a string' if currency.to_s.empty?
+      raise ArgumentError 'Recipient ID must be a string' if recipient_id.to_s.empty?
+    end
+
+    def validate_recipient_arguments(name)
+      raise ArgumentError, 'recipient name is mandatory' if name.to_s.empty?
     end
 
   end
