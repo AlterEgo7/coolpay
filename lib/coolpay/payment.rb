@@ -15,6 +15,7 @@ class Payment
     (other.class == self.class) && (id == other.id)
   end
 
+  private
 
   def validate!(options)
     raise ArgumentError, 'status cannot be empty' if options['status'].to_s.empty?

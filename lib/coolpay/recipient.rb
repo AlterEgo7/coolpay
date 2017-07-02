@@ -11,7 +11,5 @@ module Coolpay
       # Suppose the backend takes care for uniqueness of ids
       (other.class == self.class) && (id == other.id)
     end
-
-
   end
 end
