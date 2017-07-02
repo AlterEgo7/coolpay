@@ -1,5 +1,164 @@
 #!/usr/bin/env ruby
+require 'gli'
+begin # XXX: Remove this begin/rescue before distributing your app
+  require 'coolpay'
+  include Coolpay
+rescue LoadError
+  STDERR.puts "In development, you need to use `bundle exec bin/coolpay-cli` to run your app"
+  STDERR.puts "At install-time, RubyGems will make sure lib, etc. are in the load path"
+  STDERR.puts "Feel free to remove this message from bin/coolpay-cli now"
+  exit 64
+end
 
-require "coolpay"
+TOKEN_FILE_LOCATION = Dir.home + '/.coolpay'
 
-Coolpay.test
+include GLI::App
+
+program_desc 'Command-line interface for using the Coolpay API'
+
+version Coolpay::VERSION
+
+subcommand_option_handling :normal
+arguments :strict
+
+desc 'Describe some switch here'
+switch [:s, :switch]
+
+desc 'Describe some flag here'
+default_value 'the default'
+arg_name 'The name of the argument'
+flag [:f, :flagname]
+
+desc 'Login with username and password to the Coolpay API'
+# arg_name 'Describe arguments to login here'
+command :login do |login|
+  login.desc 'Describe a switch to login'
+  login.switch :s
+
+  login.desc 'Describe a flag to login'
+  login.default_value 'default'
+  login.flag :f
+
+  login.desc 'Username'
+  login.flag [:u, :username]
+
+  login.desc 'Password'
+  login.flag [:p, :password]
+
+  login.action do |global_options, options, args|
+
+    # Your command logic here
+
+    # If you have any errors, just raise them
+    # raise "that command made no sense"
+
+    username = options[:username]
+    password = options[:password]
+    if username.to_s.empty? || password.to_s.empty?
+      puts 'Must provide username and password'
+    end
+
+    token = @client.authenticate(username, password)
+
+    File.open(TOKEN_FILE_LOCATION, 'w') do |f|
+      f.write token
+    end
+
+    puts "Authentication Token: #{token}"
+  end
+end
+
+desc 'Commands for controlling recipients'
+command :recipient do |recipient|
+  recipient.desc 'List all recipients'
+  recipient.command(:ls, :list) do |list|
+
+    list.desc '(Optional) Name of recipient'
+    list.flag [:n, :name]
+
+    list.action do |global_options, options, args|
+      name = options[:name]
+      recipients = @client.get_recipients(name)
+      max_name_length = recipients.map { |r| r.name.length }.max
+
+      printf("%-36s\t%-#{max_name_length}s\n", 'ID', 'NAME')
+      recipients.each do |r|
+        printf("%-36s\t%-#{max_name_length}s\n", r.id, r.name)
+      end
+    end
+  end
+
+  recipient.desc 'Create a new recipient'
+  recipient.arg :name
+  recipient.command(:create, :cr, :add) do |create|
+    create.action do |global_options, options, args|
+      new_recipient = @client.add_recipient(args.first)
+      puts new_recipient.id
+    end
+  end
+end
+
+desc 'Commands for controlling payments'
+command :payment do |payment|
+  payment.desc 'List all payments'
+  payment.command(:ls, :list) do |list|
+    list.action do |global_options, options, args|
+      payments = @client.get_payments
+      max_currency_length = payments.map{ |p| p.currency.length }.max
+      max_amount_length = payments.map{ |p| sprintf("%.2f", p.amount).length }.max
+
+      printf("%-36s\t%-#{max_currency_length}s\t%-#{max_amount_length}s\t%-10s\t%-36s\n", 'ID', 'CURRENCY', 'AMOUNT', 'STATUS', 'RECIPIENT ID')
+      payments.each do |p|
+        printf("%-36s\t%-#{max_currency_length}s\t%-#{max_amount_length}s\t%-10s\t%-36s\n", p.id, p.currency, p.amount, p.status, p.recipient_id)
+      end
+    end
+  end
+
+  payment.desc 'Create a new payment'
+  payment.arg :amount
+  payment.command(:create, :cr, :add) do |create|
+    create.desc 'Currency of the payment'
+    create.default_value 'GBP'
+    create.flag :currency
+
+    create.desc 'Recipient ID'
+    create.flag :recipient, required: true
+
+    create.action do |global_options, options, args|
+      amount = args.first
+
+      payment = @client.create_payment amount, options[:currency], options[:recipient]
+      puts payment.id
+    end
+
+  end
+end
+
+pre do |global, command, options, args|
+  @client = Client.new
+  # Assuming the file is not maliciously changed (eg. adding a massive amount of data
+  # that would crash the app due to memory consumption)
+  unless command.name == :login
+    begin
+      token = File.read(TOKEN_FILE_LOCATION)
+    rescue
+      raise 'No token found. Please authenticate.'
+    end
+    @client.token = token
+  end
+  true
+end
+
+post do |global, command, options, args|
+  # Post logic here
+  # Use skips_post before a command to skip this
+  # block on that command only
+end
+
+on_error do |exception|
+  # Error logic here
+  # return false to skip default error handling
+  true
+end
+
+exit run(ARGV)
