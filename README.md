@@ -49,7 +49,7 @@ To login:
 ```
 coolpay login -u <username> -p <apikey>
 ```
-Logging in will save the token at ~/.coolpay
+Successfully logging in will save the token at ~/.coolpay
 
 To create a new recipient:
 ```
@@ -59,6 +59,11 @@ coolpay recipient create <name>
 To list all payments:
 ```
 coolpay payment ls
+```
+
+To view a specific payment:
+```
+coolpay payment ls --id=<payment_id>
 ```
 
 To create a payment:
