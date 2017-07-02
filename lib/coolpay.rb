@@ -80,6 +80,17 @@ module Coolpay
       Payment.new(response.parsed_response['payment'])
     end
 
+    def get_payments
+      raise UnauthorizedError if @token.nil?
+
+      response = HTTParty.get(API_URL + '/payments', headers: { :'Content-Type' => 'application/json',
+                                                                 Authorization: "Bearer #{token}" })
+
+      raise UnauthorizedError if response.unauthorized?
+
+      response.parsed_response['payments'].map{ |options| Payment.new(options) }
+    end
+
   end
 
   class AuthenticationError < StandardError

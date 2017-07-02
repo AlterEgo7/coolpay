@@ -16,7 +16,7 @@ RSpec.describe Coolpay::Client do
 
     describe 'successful' do
       before do
-        autheticate_client
+        authenticate_client
       end
 
       it 'should have receive authentication token' do
@@ -48,7 +48,7 @@ RSpec.describe Coolpay::Client do
     describe 'successful' do
 
       before do
-        autheticate_client
+        authenticate_client
 
         stub_request(:post, Coolpay::API_URL + '/recipients')
           .with(body: { name: 'recipient' }.to_json)
@@ -78,7 +78,7 @@ RSpec.describe Coolpay::Client do
   describe 'get recipients' do
     describe 'successful' do
       before do
-        autheticate_client
+        authenticate_client
 
         stub_request(:get, Coolpay::API_URL + '/recipients')
           .to_return(status: 200, body: { recipients: [{ name: 'recipient', id: '123456' },
@@ -108,7 +108,7 @@ RSpec.describe Coolpay::Client do
   describe 'create_payment' do
     describe 'successfully' do
       before do
-        autheticate_client
+        authenticate_client
 
         stub_request(:post, Coolpay::API_URL + '/payments')
           .with(body: {
@@ -137,7 +137,7 @@ RSpec.describe Coolpay::Client do
     describe 'unsuccessfully' do
 
       before do
-        autheticate_client
+        authenticate_client
       end
 
       describe 'with unprocessable entity' do
@@ -173,7 +173,58 @@ RSpec.describe Coolpay::Client do
             .to raise_error Coolpay::UnauthorizedError
         end
       end
+    end
+  end
 
+  describe 'get all payments' do
+    describe 'while authorized' do
+      before do
+        authenticate_client
+
+        @body = [
+          {
+            'status' => 'failed',
+            'recipient_id' => '7e1f5f01-fe20-47b6-ae7c-bb44cb08b2b7',
+            'id' => '3c61e144-e040-40b0-8026-1eb9db140c3f',
+            'currency' => 'ABC',
+            'amount' => '10.3'
+          },
+          {
+            'status' => 'failed',
+            'recipient_id' => '7e1f5f01-fe20-47b6-ae7c-bb44cb08b2b7',
+            'id' => 'd552f9bd-dc0e-4271-a0c1-3056fb08c304',
+            'currency' => 'EUR',
+            'amount' => '10.3'
+          },
+          {
+            'status' => 'paid',
+            'recipient_id' => '7e1f5f01-fe20-47b6-ae7c-bb44cb08b2b7',
+            'id' => '1ee22f70-1d93-4e73-9a2d-7360f42edc0d',
+            'currency' => 'GBP',
+            'amount' => '10.5'
+          }
+        ]
+        stub_request(:get, Coolpay::API_URL + '/payments')
+          .with(headers: { 'Content-Type' => 'application/json', 'Authorization' => 'Bearer valid-token' })
+          .to_return(status: 200, body: {
+            payments: @body
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'should return an array of Payments' do
+        expected = @body.map { |options| Payment.new(options) }
+        expect(@client.get_payments).to eq expected
+      end
+    end
+
+    describe 'while unauthorized' do
+      before do
+        stub_request(:get, Coolpay::API_URL + '/payments').to_return(status: 401)
+      end
+
+      it 'should raise UnauthorizedError' do
+        expect { @client.get_payments }.to raise_error Coolpay::UnauthorizedError
+      end
     end
   end
 end
