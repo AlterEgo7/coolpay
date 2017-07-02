@@ -10,7 +10,7 @@ module Coolpay
   # TODO: Refactor validations and checks into methods
   class Client
 
-    attr_reader :token
+    attr_accessor :token
 
     def authenticate(username, apikey)
       raise ArgumentError, 'username is mandatory' if username.to_s.empty?
