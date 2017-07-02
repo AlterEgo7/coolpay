@@ -27,13 +27,13 @@ RSpec.describe Coolpay::Client do
     describe 'unsuccessful' do
       before do
         stub_request(:post, Coolpay::API_URL + '/login')
-          .with(body: { username: 'valid-user', password: 'valid-password' }.to_json)
+          .with(body: { username: 'valid-user', apikey: 'valid-apikey' }.to_json)
           .to_return(status: 404, body: 'Internal Server Error',
                      headers: { 'Content-Type' => 'application/json' })
       end
 
       it 'should raise exception' do
-        expect { @client.authenticate('valid-user', 'valid-password') }
+        expect { @client.authenticate('valid-user', 'valid-apikey') }
           .to raise_error(Coolpay::AuthenticationError)
       end
     end

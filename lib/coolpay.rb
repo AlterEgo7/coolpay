@@ -12,11 +12,11 @@ module Coolpay
 
     attr_reader :token
 
-    def authenticate(username, password)
+    def authenticate(username, apikey)
       raise ArgumentError, 'username is mandatory' if username.to_s.empty?
-      raise ArgumentError, 'password is mandatory' if password.to_s.empty?
+      raise ArgumentError, 'apikey is mandatory' if apikey.to_s.empty?
 
-      body = { username: username, password: password }.to_json
+      body = { username: username, apikey: apikey }.to_json
       response = HTTParty.post(API_URL + '/login', body: body,
                                headers: { :'Content-Type' => 'application/json' })
 
@@ -84,17 +84,17 @@ module Coolpay
       raise UnauthorizedError if @token.nil?
 
       response = HTTParty.get(API_URL + '/payments', headers: { :'Content-Type' => 'application/json',
-                                                                 Authorization: "Bearer #{token}" })
+                                                                Authorization: "Bearer #{token}" })
 
       raise UnauthorizedError if response.unauthorized?
 
-      response.parsed_response['payments'].map{ |options| Payment.new(options) }
+      response.parsed_response['payments'].map { |options| Payment.new(options) }
     end
 
   end
 
   class AuthenticationError < StandardError
-    def initialize(msg = 'Authentication Unsuccessful')
+    def initialize(msg = 'Authentication Failed')
       super(msg)
     end
   end
