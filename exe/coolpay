@@ -87,10 +87,17 @@ desc 'Commands for controlling payments'
 command :payment do |payment|
   payment.desc 'List all payments'
   payment.command(:ls, :list) do |list|
+    list.desc 'Specify payment id'
+    list.flag :id
     list.action do |global_options, options, args|
       payments = @client.get_payments
-      max_currency_length = payments.map{ |p| p.currency.length }.max
-      max_amount_length = payments.map{ |p| sprintf("%.2f", p.amount).length }.max
+
+      unless options[:id].to_s.empty?
+        payments.select!{ |p| p.id == options[:id] }
+      end
+
+      max_currency_length = (payments.map{ |p| p.currency.length } << 'currency'.length).max
+      max_amount_length = (payments.map{ |p| sprintf("%.2f", p.amount).length } << 'amount'.length).max
 
       printf("%-36s\t%-#{max_currency_length}s\t%-#{max_amount_length}s\t%-10s\t%-36s\n", 'ID', 'CURRENCY', 'AMOUNT', 'STATUS', 'RECIPIENT ID')
       payments.each do |p|
