@@ -51,10 +51,10 @@ module Coolpay
       raise UnauthorizedError if @token.nil?
 
       unless name.nil?
-        body = { name: name }.to_json
+        query = { name: name }
       end
 
-      response = HTTParty.get(API_URL + '/recipients', body: body,
+      response = HTTParty.get(API_URL + '/recipients', query: query,
                               headers: { :'Content-Type' => 'application/json', Authorization: "Bearer #{token}" })
 
       raise UnauthorizedError if response.unauthorized?
