@@ -27,7 +27,7 @@ RSpec.describe Coolpay::Client do
     describe 'unsuccessful' do
       before do
         stub_request(:post, Coolpay::API_URL + '/login')
-          .with(body: { username: 'valid-user', apikey: 'valid-apikey' }.to_json)
+          .with(body: { username: 'valid-user', apikey: 'valid-apikey' })
           .to_return(status: 404, body: 'Internal Server Error',
                      headers: { 'Content-Type' => 'application/json' })
       end
@@ -51,8 +51,8 @@ RSpec.describe Coolpay::Client do
         authenticate_client
 
         stub_request(:post, Coolpay::API_URL + '/recipients')
-          .with(body: { recipient: { name: 'recipient' } }.to_json)
-          .to_return(status: 201, body: { name: 'recipient', id: '123456' }.to_json,
+          .with(body: { recipient: { name: 'recipient' } })
+          .to_return(status: 201, body: { recipient: { name: 'recipient', id: '123456' } }.to_json,
                      headers: { 'Content-Type' => 'application/json',
                                 'Authorization' => 'Bearer valid-token' })
       end
@@ -65,7 +65,7 @@ RSpec.describe Coolpay::Client do
     describe 'unsuccessful' do
       before do
         stub_request(:post, Coolpay::API_URL + '/recipients')
-          .with(body: { recipient: { name: 'recipient' } }.to_json)
+          .with(body: { recipient: { name: 'recipient' } })
           .to_return(status: 401)
       end
 
@@ -111,11 +111,11 @@ RSpec.describe Coolpay::Client do
         authenticate_client
 
         stub_request(:post, Coolpay::API_URL + '/payments')
-          .with(body: {
+          .with(body: { payment: {
             amount: 1.2,
             currency: 'GBP',
             recipient_id: 'test_recipient'
-          }, headers: { 'Content-Type' => 'application/json',
+          } }, headers: { 'Content-Type' => 'application/json',
                         'Authorization' => 'Bearer valid-token' }).to_return(status: 201, body: { payment: {
           status: 'processing',
           recipient_id: 'test_recipient',
@@ -143,11 +143,11 @@ RSpec.describe Coolpay::Client do
       describe 'with unprocessable entity' do
         before do
           stub_request(:post, Coolpay::API_URL + '/payments')
-            .with(body: {
+            .with(body: { payment: {
               amount: 1.2,
               currency: 'GBP',
               recipient_id: 'non-existent recipient'
-            }, headers: { 'Content-Type' => 'application/json',
+            } }, headers: { 'Content-Type' => 'application/json',
                           'Authorization' => 'Bearer valid-token' }).to_return(status: 422, body: 'Unprocessable Entity')
         end
 
@@ -160,11 +160,11 @@ RSpec.describe Coolpay::Client do
       describe 'with unauthorised' do
         before do
           stub_request(:post, Coolpay::API_URL + '/payments')
-            .with(body: {
+            .with(body: { payment: {
               amount: 1.2,
               currency: 'GBP',
               recipient_id: 'non-existent recipient'
-            }, headers: { 'Content-Type' => 'application/json',
+            } }, headers: { 'Content-Type' => 'application/json',
                           'Authorization' => 'Bearer valid-token' }).to_return(status: 401)
         end
 
