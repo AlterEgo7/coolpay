@@ -1,4 +1,4 @@
-# Coolpay
+# Coolpay [![Build Status](https://travis-ci.org/AlterEgo7/coolpay.svg?branch=master)](https://travis-ci.org/AlterEgo7/coolpay)
 
 Simple Ruby Client for the Coolpay API
 
@@ -85,3 +85,5 @@ the API itself does not allow searching payments. It was a design decision
 whether to create a Client method to provide this, or delegate it to the 
 presentation layer. I chose the latter, to make the API functionality clear 
 to the end users.
+
+* Used latest Ruby 2.4.1
