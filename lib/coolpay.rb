@@ -6,6 +6,8 @@ module Coolpay
 
   API_URL = 'https://coolpay.herokuapp.com/api'
 
+
+  # TODO: Refactor validations and checks into methods
   class Client
 
     attr_reader :token
@@ -73,6 +75,7 @@ module Coolpay
                                                                              Authorization: "Bearer #{token}" })
 
       raise UnauthorizedError if response.unauthorized?
+      raise ArgumentError, 'Recipient does not exist' if response.unprocessable_entity?
 
       Payment.new(response.parsed_response['payment'])
     end
