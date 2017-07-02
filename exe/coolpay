@@ -21,29 +21,14 @@ version Coolpay::VERSION
 subcommand_option_handling :normal
 arguments :strict
 
-desc 'Describe some switch here'
-switch [:s, :switch]
-
-desc 'Describe some flag here'
-default_value 'the default'
-arg_name 'The name of the argument'
-flag [:f, :flagname]
-
-desc 'Login with username and password to the Coolpay API'
+desc 'Login with username and API key to the Coolpay API'
 # arg_name 'Describe arguments to login here'
 command :login do |login|
-  login.desc 'Describe a switch to login'
-  login.switch :s
-
-  login.desc 'Describe a flag to login'
-  login.default_value 'default'
-  login.flag :f
-
   login.desc 'Username'
   login.flag [:u, :username]
 
-  login.desc 'Password'
-  login.flag [:p, :password]
+  login.desc 'API Key'
+  login.flag [:p, :apikey]
 
   login.action do |global_options, options, args|
 
@@ -53,12 +38,12 @@ command :login do |login|
     # raise "that command made no sense"
 
     username = options[:username]
-    password = options[:password]
-    if username.to_s.empty? || password.to_s.empty?
-      puts 'Must provide username and password'
+    apikey = options[:apikey]
+    if username.to_s.empty? || apikey.to_s.empty?
+      puts 'Must provide username and API key'
     end
 
-    token = @client.authenticate(username, password)
+    token = @client.authenticate(username, apikey)
 
     File.open(TOKEN_FILE_LOCATION, 'w') do |f|
       f.write token
