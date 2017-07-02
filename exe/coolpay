@@ -107,20 +107,26 @@ command :payment do |payment|
   end
 
   payment.desc 'Create a new payment'
-  payment.arg :amount
+  payment.arg :recipients, multiple: true
   payment.command(:create, :cr, :add) do |create|
     create.desc 'Currency of the payment'
     create.default_value 'GBP'
     create.flag :currency
 
-    create.desc 'Recipient ID'
-    create.flag :recipient, required: true
+    create.desc 'Payment amount'
+    create.flag :amount, required: true
 
     create.action do |global_options, options, args|
-      amount = args.first
+      recipients = args
 
-      payment = @client.create_payment amount, options[:currency], options[:recipient]
-      puts payment.id
+      recipients.map do |recipient|
+        begin
+          payment = @client.create_payment options[:amount], options[:currency], recipient
+          puts payment.id
+        rescue => e
+          puts "Payment: { amount: #{options[:amount]}, currency: #{options[:currency]}, recipient_id: #{recipient} } failed." + e.message
+        end
+      end
     end
 
   end
