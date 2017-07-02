@@ -49,7 +49,7 @@ module Coolpay
       raise UnauthorizedError if @token.nil?
 
       unless name.nil?
-        body = { name: name }
+        body = { name: name }.to_json
       end
 
       response = HTTParty.get(API_URL + '/recipients', body: body,
@@ -59,6 +59,22 @@ module Coolpay
 
       response.parsed_response['recipients']
         .map { |h| Recipient.new(h['name'], h['id']) }
+    end
+
+    def create_payment(amount, currency, recipient_id)
+      raise UnauthorizedError if @token.nil?
+      raise ArgumentError 'Amount must be numeric' unless amount.is_a? Numeric
+      raise ArgumentError 'Currency must be a string' unless currency.is_a? String
+      raise ArgumentError 'Recipient ID must be a string' unless recipient_id.is_a? String
+
+      body = { amount: amount, currency: currency, recipient_id: recipient_id }.to_json
+
+      response = HTTParty.post(API_URL + '/payments', body: body, headers: { :'Content-Type' => 'application/json',
+                                                                             Authorization: "Bearer #{token}" })
+
+      raise UnauthorizedError if response.unauthorized?
+
+      Payment.new(response.parsed_response['payment'])
     end
 
   end

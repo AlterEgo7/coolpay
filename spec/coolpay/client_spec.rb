@@ -1,4 +1,5 @@
 require "spec_helper"
+require 'coolpay/payment'
 
 RSpec.describe Coolpay::Client do
   before do
@@ -112,6 +113,40 @@ RSpec.describe Coolpay::Client do
 
       it 'should raise UnauthorizedError' do
         expect { @client.get_recipients }.to raise_error Coolpay::UnauthorizedError
+      end
+    end
+  end
+
+  describe 'create_payment' do
+    describe 'successfully' do
+      before do
+        stub_request(:post, Coolpay::API_URL + '/login')
+          .with(body: { username: 'valid-user', password: 'valid-password' }.to_json)
+          .to_return(status: 200, body: { token: 'valid-token' }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+
+        stub_request(:post, Coolpay::API_URL + '/payments')
+          .with(body: {
+            amount: 1.2,
+            currency: 'GBP',
+            recipient_id: 'test_recipient'
+          }, headers: { 'Content-Type' => 'application/json',
+                        'Authorization' => 'Bearer valid-token' }).to_return(status: 201, body: { payment: {
+            status: 'processing',
+            recipient_id: 'test_recipient',
+            id: 'payment_id',
+            currency: 'GBP',
+            amount: '1.20'
+          } }.to_json, headers: { 'Content-Type' => 'application/json' })
+
+        @client.authenticate('valid-user', 'valid-password')
+      end
+
+      it 'should return a new Payment' do
+        expect(@client.create_payment(1.2, 'GBP', 'test_recipient'))
+          .to eq Payment.new('status' => 'processing', 'amount' => 1.2,
+                             'recipient_id' => 'test_recipient', 'id' => 'payment_id',
+                             'currency' => 'GBP')
       end
     end
   end
