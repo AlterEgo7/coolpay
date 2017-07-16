@@ -68,7 +68,7 @@ coolpay payment ls --id=<payment_id>
 
 To create a payment:
 ```
-coolpay payment create --amount=<maount> --currency=<currency> recipients
+coolpay payment create --amount=<amount> --currency=<currency> recipients
 ```
 
 ## Notes
